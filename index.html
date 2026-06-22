@@ -158,15 +158,23 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .option-item input[type="checkbox"] {
+        
+        /* Checkboxes e Radios customizados */
+        .option-item input[type="checkbox"], .option-item input[type="radio"] {
             appearance: none; -webkit-appearance: none;
             width: 22px; height: 22px;
             border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 6px; margin-right: 14px;
-            display: flex; align-items: center; justify-content: center;
+            margin-right: 14px; display: flex; align-items: center; justify-content: center;
         }
-        .option-item input[type="checkbox"]:checked { background: var(--yellow); border-color: var(--yellow); }
+        .option-item input[type="checkbox"] { border-radius: 6px; }
+        .option-item input[type="radio"] { border-radius: 50%; }
+        
+        .option-item input[type="checkbox"]:checked, .option-item input[type="radio"]:checked { 
+            background: var(--yellow); border-color: var(--yellow); 
+        }
         .option-item input[type="checkbox"]:checked::after { content: '✓'; color: var(--purple-deep); font-size: 14px; font-weight: 900; }
+        .option-item input[type="radio"]:checked::after { content: ''; width: 10px; height: 10px; background: var(--purple-deep); border-radius: 50%; }
+        
         .option-text { font-size: 1.05rem; }
         .option-item.active { border-color: rgba(255, 204, 0, 0.4); }
         .option-item.active .option-text { color: var(--yellow); font-weight: 600; }
@@ -198,11 +206,12 @@
             display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
         }
         .input-group label { font-size: 0.9rem; color: rgba(255,255,255,0.8); }
-        .input-group input {
+        .input-group input, .input-group select {
             background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
             padding: 12px; border-radius: 10px; color: white; font-size: 1rem;
         }
-        .input-group input:focus { border-color: var(--yellow); outline: none; }
+        .input-group select option { background: var(--purple-deep); color: white; }
+        .input-group input:focus, .input-group select:focus { border-color: var(--yellow); outline: none; }
 
         .cart-preview-title { font-size: 1.2rem; color: var(--yellow); margin-bottom: 10px; font-weight: 700; }
         .cart-items-list { margin-bottom: 15px; }
@@ -278,10 +287,25 @@
             </div>
         </div>
 
-        <!-- 2. COMPLEMENTOS -->
+        <!-- 2. SABOR (NOVO) -->
+        <div class="section">
+            <div class="section-title"><span><span class="step">2.</span>Escolha o Sabor</span></div>
+            <div class="options-list">
+                <label class="option-item" onclick="selectSabor(this)">
+                    <input type="radio" name="sabor" value="Açaí">
+                    <span class="option-text">Açaí</span>
+                </label>
+                <label class="option-item" onclick="selectSabor(this)">
+                    <input type="radio" name="sabor" value="Maracujá">
+                    <span class="option-text">Maracujá</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 3. COMPLEMENTOS -->
         <div class="section">
             <div class="section-title">
-                <span><span class="step">2.</span>Complementos</span>
+                <span><span class="step">3.</span>Complementos</span>
                 <span class="limit-badge">Até 3 un.</span>
             </div>
             <div class="options-list">
@@ -294,10 +318,10 @@
             </div>
         </div>
 
-        <!-- 3. BORDA -->
+        <!-- 4. BORDA -->
         <div class="section">
             <div class="section-title">
-                <span><span class="step">3.</span>Borda</span>
+                <span><span class="step">4.</span>Borda</span>
                 <span class="limit-badge">Até 1 un.</span>
             </div>
             <div class="options-list">
@@ -309,9 +333,9 @@
             </div>
         </div>
 
-        <!-- 4. QUANTIDADE DESTE SHAKE -->
+        <!-- 5. QUANTIDADE DESTE SHAKE -->
         <div class="section" style="margin-bottom: 15px;">
-            <div class="section-title"><span><span class="step">4.</span>Quantidade</span></div>
+            <div class="section-title"><span><span class="step">5.</span>Quantidade</span></div>
             <div class="qty-container">
                 <span class="qty-label">Deste mesmo modelo:</span>
                 <div class="qty-controls">
@@ -351,6 +375,26 @@
             </div>
         </div>
 
+        <!-- FORMA DE PAGAMENTO (NOVO) -->
+        <div style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 20px;">
+            <div class="cart-preview-title" style="font-size: 1.1rem;">💵 Forma de Pagamento</div>
+            <div class="input-group">
+                <label>Como deseja pagar? *</label>
+                <select id="payment-method" onchange="handlePaymentChange()">
+                    <option value="">Selecione...</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Crédito">Cartão de Crédito</option>
+                    <option value="Débito">Cartão de Débito</option>
+                    <option value="Espécie">Espécie (Dinheiro)</option>
+                </select>
+            </div>
+            
+            <div id="change-group" class="input-group" style="display: none;">
+                <label>Precisa de troco? Para quanto?</label>
+                <input type="text" id="payment-change" placeholder="Ex: Troco para R$ 50 ou Não preciso">
+            </div>
+        </div>
+
         <!-- RESUMO DE VALORES -->
         <div style="margin-top: 25px;">
             <div class="summary-line"><span>Produtos:</span><span id="summary-subtotal">R$ 0,00</span></div>
@@ -374,6 +418,7 @@
 <script>
     let unitPrice = 0.00;
     let selectedSizeName = "";
+    let selectedSaborName = "";
     let quantity = 1;
     let cart = [];
 
@@ -382,6 +427,14 @@
         element.classList.add('selected');
         unitPrice = price;
         selectedSizeName = sizeName;
+    }
+
+    function selectSabor(element) {
+        document.querySelectorAll('input[name="sabor"]').forEach(el => el.closest('.option-item').classList.remove('active'));
+        const radio = element.querySelector('input[type="radio"]');
+        radio.checked = true;
+        element.classList.add('active');
+        selectedSaborName = radio.value;
     }
 
     function toggleOptionItem(element) {
@@ -407,9 +460,24 @@
         document.getElementById('qty-display').innerText = quantity;
     }
 
+    function handlePaymentChange() {
+        const method = document.getElementById('payment-method').value;
+        const changeGroup = document.getElementById('change-group');
+        if (method === 'Espécie') {
+            changeGroup.style.display = 'flex';
+        } else {
+            changeGroup.style.display = 'none';
+            document.getElementById('payment-change').value = '';
+        }
+    }
+
     function addToCart() {
         if (unitPrice === 0) {
             alert("Por favor, selecione o tamanho do seu shake!");
+            return;
+        }
+        if (!selectedSaborName) {
+            alert("Por favor, selecione o sabor do seu shake!");
             return;
         }
 
@@ -421,6 +489,7 @@
 
         const cartItem = {
             tamanho: selectedSizeName,
+            sabor: selectedSaborName,
             precoUnitario: unitPrice,
             complementos: complementos,
             bordas: bords,
@@ -437,10 +506,12 @@
     function resetForm() {
         unitPrice = 0.00;
         selectedSizeName = "";
+        selectedSaborName = "";
         quantity = 1;
         document.getElementById('qty-display').innerText = "1";
         document.querySelectorAll('.size-card').forEach(card => card.classList.remove('selected'));
         document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.querySelectorAll('input[name="sabor"]').forEach(rb => rb.checked = false);
         document.querySelectorAll('.option-item').forEach(item => item.classList.remove('active'));
     }
 
@@ -470,7 +541,7 @@
             container.innerHTML += `
                 <div class="cart-item-row">
                     <div>
-                        <b>${item.qtd}x Shake ${item.tamanho}</b><br>
+                        <b>${item.qtd}x Shake ${item.tamanho} (${item.sabor})</b><br>
                         <span style="font-size:0.8rem; color:rgba(255,255,255,0.7)">
                             Compl: ${descComplementos} | Borda: ${descBordas}
                         </span>
@@ -511,9 +582,16 @@
         const endereco = document.getElementById('delivery-address').value.trim();
         const bairro = document.getElementById('delivery-neighborhood').value.trim();
         const referencia = document.getElementById('delivery-reference').value.trim();
+        const formaPagamento = document.getElementById('payment-method').value;
+        const troco = document.getElementById('payment-change').value.trim();
 
         if (!nome || !endereco || !bairro) {
             alert("Por favor, preencha o Nome, Endereço e Bairro para a entrega!");
+            return;
+        }
+
+        if (!formaPagamento) {
+            alert("Por favor, selecione a Forma de Pagamento!");
             return;
         }
 
@@ -528,7 +606,7 @@
             let compls = item.complementos.length > 0 ? item.complementos.join(', ') : 'Nenhum';
             let bds = item.bordas.length > 0 ? item.bordas.join(', ') : 'Nenhuma';
             
-            mensagem += `${index + 1}. *${item.qtd}x Shake ${item.tamanho}* (R$ ${item.precoUnitario.toFixed(2).replace('.', ',')} cada)%0A`;
+            mensagem += `${index + 1}. *${item.qtd}x Shake ${item.tamanho}* Sabor: *${item.sabor}*%0A`;
             mensagem += `   • Complementos: ${compls}%0A`;
             mensagem += `   • Borda: ${bds}%0A%0A`;
         });
@@ -543,11 +621,18 @@
         if (referencia) mensagem += `• *Referência:* ${referencia}%0A`;
         mensagem += `%0A`;
 
+        mensagem += `*💵 PAGAMENTO:*%0A`;
+        mensagem += `• *Forma:* ${formaPagamento}%0A`;
+        if (formaPagamento === 'Espécie' && troco) {
+            mensagem += `• *Informações de Troco:* ${troco}%0A`;
+        }
+        mensagem += `%0A`;
+
         mensagem += `*💰 RESUMO DOS VALORES:*%0A`;
         mensagem += `• Subtotal: R$ ${totalProdutos.toFixed(2).replace('.', ',')}%0A`;
         mensagem += `• Entrega: ${taxaEntrega === 0 ? 'GRÁTIS' : `R$ ${taxaEntrega.toFixed(2).replace('.', ',')}`}%0A`;
         mensagem += `• *TOTAL GERAL:* R$ ${totalGeral.toFixed(2).replace('.', ',')}%0A%0A`;
-        mensagem += `_Gostaria de confirmar o pedido e combinar a forma de pagamento!_`;
+        mensagem += `_Gostaria de confirmar o pedido e fazer o envio!_`;
 
         window.open(`https://wa.me/558694550572?text=${mensagem}`, '_blank');
     }
